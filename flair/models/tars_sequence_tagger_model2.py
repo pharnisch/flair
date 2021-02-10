@@ -275,13 +275,9 @@ class TARSSequenceTagger2(flair.nn.Model):
         candidate_tag_list = []
         for tag in self.tag_dictionary.idx2item:
             tag = tag.decode("utf-8")
-            spl = tag.split("-")
-            if len(spl) == 1: # no tag was found
-                print("no - was found in a tag:")
-                print(tag)
-                print()
-            elif tag != "O": # tag found that is either B or I
-                candidate_tag_list.append("-".join(spl[1:]))
+            prefix, tag_no_prefix = self._split_tag(tag)
+            if prefix == "B" or prefix == "I":
+                candidate_tag_list.append(tag_no_prefix)
         candidate_tag_list = self._remove_not_unique_items_from_list(candidate_tag_list)
 
         tag_dictionary_no_prefix: Dictionary = Dictionary(add_unk=False)
