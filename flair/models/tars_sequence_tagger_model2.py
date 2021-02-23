@@ -420,7 +420,7 @@ class TARSSequenceTagger2(flair.nn.Model):
         return new_list
 
     @staticmethod
-    def _make_ad_hoc_tag_dictionary(candidate_tag_set: set = None) -> Dictionary:
+    def _make_ad_hoc_tag_dictionary(candidate_tag_set: set = None, use_O: bool = True) -> Dictionary:
         """
         Creates a dictionary given a set of candidate tags
         :return: dictionary of tags
@@ -430,12 +430,20 @@ class TARSSequenceTagger2(flair.nn.Model):
         if not isinstance(candidate_tag_set, set):
             candidate_tag_set = set(candidate_tag_set)
 
+        if use_O == True:
+            tag_dictionary.add_item("O")
         for tag in candidate_tag_set:
-            tag_dictionary.add_item(tag)
+            if tag != "O":
+                tag_pref = tag[:2]
+                if tag_pref == "B-" or tag_pref == "I-":
+                    tag_dictionary.add_item(tag)
+                else:
+                    tag_dictionary.add_item("B-" + tag)
+                    tag_dictionary.add_item("I-" + tag)
 
         return tag_dictionary
 
-    def predict_zero_shot(self, sentences, candidate_tag_set):
+    def predict_zero_shot(self, sentences, candidate_tag_set, use_O: bool = True):
         """
         Method to make zero shot predictions from the TARS model
         :param sentences: input sentence objects to classify
@@ -448,7 +456,7 @@ class TARSSequenceTagger2(flair.nn.Model):
             log.warning("Provided candidate_tag_set is empty")
             return
 
-        tag_dictionary = TARSSequenceTagger2._make_ad_hoc_tag_dictionary(candidate_tag_set)
+        tag_dictionary = TARSSequenceTagger2._make_ad_hoc_tag_dictionary(candidate_tag_set, use_O=use_O)
 
         # note current task
         existing_current_task = self.current_task
